@@ -6,6 +6,8 @@ import './styles.css'
 const ORGS = ['Penn State', 'TruStage', 'WEX', 'HCB', 'Personal']
 const PRIORITIES = ['🔴 Critical', '🟠 High', '🟡 Medium', '🟢 Low']
 const STATUSES = ['New', 'Meeting', 'In Progress', 'Waiting', 'Blocked', 'Done']
+const FOLLOWUP_STATUSES = ['Need to Send', 'Waiting on Others', 'Escalate', 'Closed']
+const INITIATIVE_STATUSES = ['Ideas', 'Active', 'Blocked', 'Completed']
 
 function App(){
   const [session,setSession]=useState(null)
@@ -187,20 +189,140 @@ function Field({label,children}){return <label><span>{label}</span>{children}</l
 
 function Tasks({tasks,insert,update,remove}){
   const [f,setF]=useState({title:'',org:'Penn State',priority:'🟡 Medium',status:'New',day:'',next_action:'',waiting_on:'',workfront_needed:false,notes:'',tool:''})
-  return <section><h2>Tasks</h2><div className="form"><Field label="Title"><input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></Field><Field label="Org"><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select></Field><Field label="Priority"><select value={f.priority} onChange={e=>setF({...f,priority:e.target.value})}>{PRIORITIES.map(p=><option key={p}>{p}</option>)}</select></Field><Field label="Status"><select value={f.status} onChange={e=>setF({...f,status:e.target.value})}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></Field><Field label="Next action"><input value={f.next_action} onChange={e=>setF({...f,next_action:e.target.value})}/></Field><Field label="Waiting on"><input value={f.waiting_on} onChange={e=>setF({...f,waiting_on:e.target.value})}/></Field><Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Field><label className="check"><input type="checkbox" checked={f.workfront_needed} onChange={e=>setF({...f,workfront_needed:e.target.checked})}/> Workfront needed</label><button onClick={()=>{if(f.title)insert('tasks',f);setF({...f,title:'',notes:'',next_action:'',waiting_on:''})}}>Add task</button></div><Cards rows={tasks} remove={(id)=>remove('tasks',id)} update={(id,p)=>update('tasks',id,p)} type="task"/></section>
+  return <section><h2>Tasks</h2><div className="form"><Field label="Title"><input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></Field><Field label="Org"><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select></Field><Field label="Priority"><select value={f.priority} onChange={e=>setF({...f,priority:e.target.value})}>{PRIORITIES.map(p=><option key={p}>{p}</option>)}</select></Field><Field label="Status"><select value={f.status} onChange={e=>setF({...f,status:e.target.value})}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></Field><Field label="Next action"><input value={f.next_action} onChange={e=>setF({...f,next_action:e.target.value})}/></Field><Field label="Waiting on"><input value={f.waiting_on} onChange={e=>setF({...f,waiting_on:e.target.value})}/></Field><Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Field><label className="check"><input type="checkbox" checked={f.workfront_needed} onChange={e=>setF({...f,workfront_needed:e.target.checked})}/> Workfront needed</label><button onClick={()=>{if(f.title)insert('tasks',f);setF({...f,title:'',notes:'',next_action:'',waiting_on:''})}}>Add task</button></div><Cards rows={tasks} remove={(id)=>remove('tasks',id)} update={(id,p)=>update('tasks',id,p)} insert={insert} type="task"/></section>
 }
 function Initiatives({items,insert,update,remove}){
   const [f,setF]=useState({title:'',org:'Penn State',status:'Active',goal:'',stakeholders:'',next_action:'',waiting_on:'',notes:''})
-  return <section><h2>Initiatives</h2><div className="form"><Field label="Title"><input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></Field><Field label="Org"><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select></Field><Field label="Status"><input value={f.status} onChange={e=>setF({...f,status:e.target.value})}/></Field><Field label="Goal"><textarea value={f.goal} onChange={e=>setF({...f,goal:e.target.value})}/></Field><Field label="Stakeholders"><input value={f.stakeholders} onChange={e=>setF({...f,stakeholders:e.target.value})}/></Field><Field label="Next action"><input value={f.next_action} onChange={e=>setF({...f,next_action:e.target.value})}/></Field><Field label="Waiting on"><input value={f.waiting_on} onChange={e=>setF({...f,waiting_on:e.target.value})}/></Field><Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Field><button onClick={()=>{if(f.title)insert('initiatives',f);setF({...f,title:'',goal:'',stakeholders:'',next_action:'',waiting_on:'',notes:''})}}>Add initiative</button></div><Cards rows={items} remove={(id)=>remove('initiatives',id)} update={(id,p)=>update('initiatives',id,p)} /></section>
+  return <section><h2>Initiatives</h2><div className="form"><Field label="Title"><input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></Field><Field label="Org"><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select></Field><Field label="Status"><input value={f.status} onChange={e=>setF({...f,status:e.target.value})}/></Field><Field label="Goal"><textarea value={f.goal} onChange={e=>setF({...f,goal:e.target.value})}/></Field><Field label="Stakeholders"><input value={f.stakeholders} onChange={e=>setF({...f,stakeholders:e.target.value})}/></Field><Field label="Next action"><input value={f.next_action} onChange={e=>setF({...f,next_action:e.target.value})}/></Field><Field label="Waiting on"><input value={f.waiting_on} onChange={e=>setF({...f,waiting_on:e.target.value})}/></Field><Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Field><button onClick={()=>{if(f.title)insert('initiatives',f);setF({...f,title:'',goal:'',stakeholders:'',next_action:'',waiting_on:'',notes:''})}}>Add initiative</button></div><Cards rows={items} remove={(id)=>remove('initiatives',id)} update={(id,p)=>update('initiatives',id,p)} insert={insert} type="initiative"/></section>
 }
 function Followups({items,insert,update,remove}){
   const [f,setF]=useState({title:'',org:'Penn State',due_date:'',status:'Open',notes:''})
-  return <section><h2>Follow-ups / Waiting On</h2><div className="form"><Field label="Title"><input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></Field><Field label="Org"><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select></Field><Field label="Due date"><input type="date" value={f.due_date} onChange={e=>setF({...f,due_date:e.target.value})}/></Field><Field label="Status"><input value={f.status} onChange={e=>setF({...f,status:e.target.value})}/></Field><Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Field><button onClick={()=>{if(f.title)insert('followups',f);setF({...f,title:'',notes:''})}}>Add follow-up</button></div><Cards rows={items} remove={(id)=>remove('followups',id)} update={(id,p)=>update('followups',id,p)} /></section>
+  return <section><h2>Follow-ups / Waiting On</h2><div className="form"><Field label="Title"><input value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></Field><Field label="Org"><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select></Field><Field label="Due date"><input type="date" value={f.due_date} onChange={e=>setF({...f,due_date:e.target.value})}/></Field><Field label="Status"><input value={f.status} onChange={e=>setF({...f,status:e.target.value})}/></Field><Field label="Notes"><textarea value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Field><button onClick={()=>{if(f.title)insert('followups',f);setF({...f,title:'',notes:''})}}>Add follow-up</button></div><Cards rows={items} remove={(id)=>remove('followups',id)} update={(id,p)=>update('followups',id,p)} insert={insert} type="followup"/></section>
 }
 function Log({logs,insert,remove}){
   const [f,setF]=useState({text:'',org:'Penn State'})
   return <section><h2>Work Log</h2><div className="inline"><input value={f.text} onChange={e=>setF({...f,text:e.target.value})} placeholder="What did you do?"/><select value={f.org} onChange={e=>setF({...f,org:e.target.value})}>{ORGS.map(o=><option key={o}>{o}</option>)}</select><button onClick={()=>{if(f.text)insert('work_log',f);setF({...f,text:''})}}>Log</button></div><div className="grid">{logs.map(l=><article key={l.id}><div className="meta">{new Date(l.created_at).toLocaleString()} · {l.org}</div><h3>{l.text}</h3><button className="ghost" onClick={()=>remove('work_log',l.id)}>Delete</button></article>)}</div></section>
 }
-function Cards({rows,remove,update,type}){return <div className="grid">{rows.map(r=><article key={r.id}><div className="meta">{r.org} · {r.status||''} {r.priority||''}</div><h3>{r.title}</h3>{r.goal&&<p><b>Goal:</b> {r.goal}</p>}{r.next_action&&<p><b>Next:</b> {r.next_action}</p>}{r.waiting_on&&<p><b>Waiting on:</b> {r.waiting_on}</p>}{r.due_date&&<p><b>Due:</b> {r.due_date}</p>}{r.workfront_needed&&<p className="warn">Workfront needed</p>}{r.notes&&<p>{r.notes}</p>}<div className="actions">{type==='task'&&<button onClick={()=>update(r.id,{done:!r.done,status:!r.done?'Done':'New'})}>{r.done?'Reopen':'Done'}</button>}<button className="ghost" onClick={()=>remove(r.id)}>Delete</button></div></article>)}</div>}
+function Cards({ rows, remove, update, insert, type }) {
+  const [editing, setEditing] = useState(null)
+
+  async function moveItem(row, targetType) {
+    if (!targetType || targetType === type) return
+
+    if (targetType === 'task') {
+      await insert('tasks', {
+        title: row.title,
+        org: row.org || 'Penn State',
+        priority: row.priority || '🟡 Medium',
+        status: 'New',
+        next_action: row.next_action || 'Review and prioritize',
+        waiting_on: row.waiting_on || '',
+        notes: row.notes || row.goal || '',
+        workfront_needed: false,
+        done: false
+      })
+    }
+
+    if (targetType === 'followup') {
+      await insert('followups', {
+        title: row.title,
+        org: row.org || 'Penn State',
+        status: 'Need to Send',
+        notes: row.notes || row.next_action || ''
+      })
+    }
+
+    if (targetType === 'initiative') {
+      await insert('initiatives', {
+        title: row.title,
+        org: row.org || 'Penn State',
+        status: 'Active',
+        next_action: row.next_action || 'Define next action',
+        waiting_on: row.waiting_on || '',
+        notes: row.notes || ''
+      })
+    }
+
+    remove(row.id)
+  }
+
+  return (
+    <div className="grid">
+      {rows.map(r => (
+        <article key={r.id}>
+          {editing === r.id ? (
+            <>
+              <Field label="Title">
+                <input value={r.title || ''} onChange={e => update(r.id, { title: e.target.value })} />
+              </Field>
+
+              <Field label="Org">
+                <select value={r.org || 'Penn State'} onChange={e => update(r.id, { org: e.target.value })}>
+                  {ORGS.map(o => <option key={o}>{o}</option>)}
+                </select>
+              </Field>
+
+              <Field label="Status">
+                <input value={r.status || ''} onChange={e => update(r.id, { status: e.target.value })} />
+              </Field>
+
+              {type === 'task' && (
+                <Field label="Priority">
+                  <select value={r.priority || '🟡 Medium'} onChange={e => update(r.id, { priority: e.target.value })}>
+                    {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+                  </select>
+                </Field>
+              )}
+
+              <Field label="Next action">
+                <input value={r.next_action || ''} onChange={e => update(r.id, { next_action: e.target.value })} />
+              </Field>
+
+              <Field label="Waiting on">
+                <input value={r.waiting_on || ''} onChange={e => update(r.id, { waiting_on: e.target.value })} />
+              </Field>
+
+              <Field label="Notes">
+                <textarea value={r.notes || ''} onChange={e => update(r.id, { notes: e.target.value })} />
+              </Field>
+
+              <button onClick={() => setEditing(null)}>Done editing</button>
+            </>
+          ) : (
+            <>
+              <div className="meta">{r.org} · {r.status || ''} {r.priority || ''}</div>
+              <h3>{r.title}</h3>
+              {r.goal && <p><b>Goal:</b> {r.goal}</p>}
+              {r.next_action && <p><b>Next:</b> {r.next_action}</p>}
+              {r.waiting_on && <p><b>Waiting on:</b> {r.waiting_on}</p>}
+              {r.due_date && <p><b>Due:</b> {r.due_date}</p>}
+              {r.workfront_needed && <p className="warn">Workfront needed</p>}
+              {r.notes && <p>{r.notes}</p>}
+
+              <div className="actions">
+                {type === 'task' && (
+                  <button onClick={() => update(r.id, { done: !r.done, status: !r.done ? 'Done' : 'New' })}>
+                    {r.done ? 'Reopen' : 'Done'}
+                  </button>
+                )}
+
+                <button onClick={() => setEditing(r.id)}>Edit</button>
+
+                <select onChange={e => moveItem(r, e.target.value)} defaultValue="">
+                  <option value="">Move to...</option>
+                  <option value="task">Task</option>
+                  <option value="followup">Follow-up</option>
+                  <option value="initiative">Initiative</option>
+                </select>
+
+                <button className="ghost" onClick={() => remove(r.id)}>Delete</button>
+              </div>
+            </>
+          )}
+        </article>
+      ))}
+    </div>
+  )
+}
 
 createRoot(document.getElementById('root')).render(<App />)
