@@ -5,7 +5,7 @@ import './styles.css'
 
 const ORGS = ['Penn State', 'TruStage', 'WEX', 'HCB', 'Personal']
 const PRIORITIES = ['🔴 Critical', '🟠 High', '🟡 Medium', '🟢 Low']
-const STATUSES = ['New', 'In Progress', 'Waiting', 'Blocked', 'Done']
+const STATUSES = ['New', 'Meeting', 'In Progress', 'Waiting', 'Blocked', 'Done']
 
 function App(){
   const [session,setSession]=useState(null)
@@ -68,6 +68,59 @@ async function signIn() {
     navigator.clipboard?.writeText(prompt)
   }
 
+  async function analyzeInbox() {
+  if (!intake.trim()) return alert("Paste something into the inbox first.");
+
+  const lines = intake.split("\n").map(l => l.trim()).filter(Boolean);
+  let created = { tasks: 0, followups: 0, initiatives: 0 };
+
+  function guessOrg(text) {
+    const t = text.toLowerCase();
+    if (t.includes("penn") || t.includes("psu")) return "Penn State";
+    if (t.includes("wex")) return "WEX";
+    if (t.includes("trustage")) return "TruStage";
+    if (t.includes("hcb") || t.includes("highland")) return "HCB";
+    return "Penn State";
+  }
+
+  for (const line of lines) {
+    const org = guessOrg(line);
+
+    const isMeeting = /^\d{1,2}:\d{2}/.test(line) || /\bAM\b|\bPM\b/i.test(line);
+    const isFollowup = /follow[- ]?up|waiting on|check with|circle back|touch base|ask /i.test(line);
+    const isInitiative = /strategy|governance|implementation|migration|roadmap|operating model|architecture/i.test(line);
+    const isTask = /need to|review|update|create|fix|build|document|draft|submit|check/i.test(line);
+
+    if (isFollowup) {
+      await insert("followups", { title: line, org, status: "Open" });
+      created.followups++;
+    } else if (isInitiative && !isTask && !isMeeting) {
+      await insert("initiatives", {
+        title: line,
+        org,
+        status: "Active",
+        next_action: "Define next action"
+      });
+      created.initiatives++;
+    } else {
+      await insert("tasks", {
+        title: line,
+        org,
+        priority: isMeeting ? "🟢 Low" : "🟡 Medium",
+        status: isMeeting ? "Meeting" : "New",
+        next_action: isMeeting ? "Capture follow-ups" : "Review and prioritize",
+        workfront_needed: false,
+        done: false
+      });
+      created.tasks++;
+    }
+  }
+
+  alert(`Created ${created.tasks} tasks, ${created.followups} follow-ups, and ${created.initiatives} initiatives.`);
+  setIntake("");
+  await loadAll();
+}
+
   const counts=useMemo(()=>({tasks:tasks.filter(t=>!t.done).length, initiatives:initiatives.length, followups:followups.filter(f=>f.status!=='Done').length}),[tasks,initiatives,followups])
 
   if(loading) return <Shell><p>Loading…</p></Shell>
@@ -102,8 +155,24 @@ async function signIn() {
     <header className="top"><div><h1>Work OS</h1><p>{session.user.email}</p></div><button className="ghost" onClick={()=>supabase.auth.signOut()}>Sign out</button></header>
     <nav>{[['inbox','Inbox'],['tasks',`Tasks ${counts.tasks}`],['initiatives',`Initiatives ${counts.initiatives}`],['followups',`Follow-ups ${counts.followups}`],['log','Work Log'],['review','AI Review']].map(([k,v])=><button className={tab===k?'active':''} onClick={()=>setTab(k)} key={k}>{v}</button>)}</nav>
 
-    {tab==='inbox' && <section><h2>Inbox / Calendar Intake</h2><p>Paste Apple Shortcut calendar output, Teams notes, Clockify notes or rough thoughts here.</p><textarea className="big" value={intake} onChange={e=>setIntake(e.target.value)} placeholder="10:00 AM | Penn State | D360 meeting…"/><button onClick={generatePlanningPrompt}>Copy AI planning prompt</button></section>}
+    {tab==='inbox' && (
+  <section>
+    <h2>Inbox / Calendar Intake</h2>
+    <p>Paste Apple Shortcut calendar output, Teams notes, Clockify notes or rough thoughts here.</p>
 
+    <textarea
+      className="big"
+      value={intake}
+      onChange={e => setIntake(e.target.value)}
+      placeholder="10:00 AM | Penn State | D360 meeting…"
+    />
+
+    <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+      <button onClick={analyzeInbox}>Analyze Inbox</button>
+      <button onClick={generatePlanningPrompt}>Copy AI planning prompt</button>
+    </div>
+  </section>
+)}
     {tab==='tasks' && <Tasks tasks={tasks} insert={insert} update={update} remove={remove}/>}    
     {tab==='initiatives' && <Initiatives items={initiatives} insert={insert} update={update} remove={remove}/>}    
     {tab==='followups' && <Followups items={followups} insert={insert} update={update} remove={remove}/>}    
