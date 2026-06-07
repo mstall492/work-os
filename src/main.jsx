@@ -10,6 +10,7 @@ const STATUSES = ['New', 'In Progress', 'Waiting', 'Blocked', 'Done']
 function App(){
   const [session,setSession]=useState(null)
   const [email,setEmail]=useState('')
+  const [password, setPassword] = useState('')
   const [loading,setLoading]=useState(true)
   const [tab,setTab]=useState('inbox')
   const [tasks,setTasks]=useState([])
@@ -27,11 +28,16 @@ function App(){
 
   useEffect(()=>{ if(session) loadAll() },[session])
 
-  async function signIn(){
-    if(!email.trim()) return
-    const {error}=await supabase.auth.signInWithOtp({email, options:{emailRedirectTo: window.location.origin}})
-    alert(error ? error.message : 'Check your email for the login link.')
-  }
+async function signIn() {
+  if (!email.trim() || !password.trim()) return;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  alert(error ? error.message : "Signed in");
+}
 
   async function loadAll(){
     const [t,i,f,l]=await Promise.all([
@@ -65,7 +71,32 @@ function App(){
   const counts=useMemo(()=>({tasks:tasks.filter(t=>!t.done).length, initiatives:initiatives.length, followups:followups.filter(f=>f.status!=='Done').length}),[tasks,initiatives,followups])
 
   if(loading) return <Shell><p>Loading…</p></Shell>
-  if(!session) return <Shell><div className="login"><h1>Work OS</h1><p>Sign in with your email magic link.</p><input placeholder="email" value={email} onChange={e=>setEmail(e.target.value)} /><button onClick={signIn}>Send login link</button></div></Shell>
+  if (!session)
+  return (
+    <Shell>
+      <div className="login">
+        <h1>Work OS</h1>
+        <p>Sign in with email and password.</p>
+
+        <input
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+        />
+
+        <button onClick={signIn}>
+          Sign In
+        </button>
+      </div>
+    </Shell>
+  );
 
   return <Shell>
     <header className="top"><div><h1>Work OS</h1><p>{session.user.email}</p></div><button className="ghost" onClick={()=>supabase.auth.signOut()}>Sign out</button></header>
