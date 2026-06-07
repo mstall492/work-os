@@ -14,7 +14,7 @@ function App(){
   const [email,setEmail]=useState('')
   const [password, setPassword] = useState('')
   const [loading,setLoading]=useState(true)
-  const [tab,setTab]=useState('inbox')
+  const [tab,setTab]=useState('dashboard')
   const [tasks,setTasks]=useState([])
   const [initiatives,setInitiatives]=useState([])
   const [followups,setFollowups]=useState([])
@@ -155,7 +155,25 @@ async function signIn() {
 
   return <Shell>
     <header className="top"><div><h1>Work OS</h1><p>{session.user.email}</p></div><button className="ghost" onClick={()=>supabase.auth.signOut()}>Sign out</button></header>
-    <nav>{[['inbox','Inbox'],['tasks',`Tasks ${counts.tasks}`],['initiatives',`Initiatives ${counts.initiatives}`],['followups',`Follow-ups ${counts.followups}`],['log','Work Log'],['review','AI Review']].map(([k,v])=><button className={tab===k?'active':''} onClick={()=>setTab(k)} key={k}>{v}</button>)}</nav>
+    <nav>{[
+  ['dashboard','Dashboard'],
+  ['inbox','Inbox'],
+  ['tasks',`Tasks ${counts.tasks}`],
+  ['initiatives',`Initiatives ${counts.initiatives}`],
+  ['followups',`Follow-ups ${counts.followups}`],
+  ['log','Work Log'],
+  ['review','AI Review']
+].map(([k,v])=><button className={tab===k?'active':''} onClick={()=>setTab(k)} key={k}>{v}</button>)}</nav>
+
+{tab === 'dashboard' && (
+  <Dashboard
+    tasks={tasks}
+    initiatives={initiatives}
+    followups={followups}
+    logs={logs}
+    setTab={setTab}
+  />
+)}
 
     {tab==='inbox' && (
   <section>
@@ -570,6 +588,103 @@ function WorkCard({ row, table, type, initiatives, insert, update, remove }) {
       )}
     </article>
   )
+}
+
+function Dashboard({ tasks, initiatives, followups, logs, setTab }) {
+  const openTasks = tasks.filter(t => !t.done && t.status !== 'Done');
+  const highPriority = openTasks.filter(t =>
+    (t.priority || '').includes('Critical') ||
+    (t.priority || '').includes('High')
+  );
+
+  const waitingTasks = openTasks.filter(t =>
+    (t.status || '').toLowerCase().includes('waiting') ||
+    t.waiting_on
+  );
+
+  const workfrontNeeded = openTasks.filter(t => t.workfront_needed);
+
+  const activeInitiatives = initiatives.filter(i =>
+    !['Completed', 'Done'].includes(i.status)
+  );
+
+  const openFollowups = followups.filter(f =>
+    !['Closed', 'Done'].includes(f.status)
+  );
+
+  const recentLogs = logs.slice(0, 5);
+
+  return (
+    <section>
+      <h2>Daily Dashboard</h2>
+      <p>Your current command center across Penn State, TruStage, WEX, HCB and Personal.</p>
+
+      <div className="dashGrid">
+        <DashBox title="High Priority" count={highPriority.length} onClick={() => setTab('tasks')}>
+          {highPriority.slice(0, 5).map(t => (
+            <DashItem key={t.id} org={t.org} title={t.title} meta={t.next_action || t.status} />
+          ))}
+        </DashBox>
+
+        <DashBox title="Waiting On" count={waitingTasks.length + openFollowups.length} onClick={() => setTab('followups')}>
+          {[...waitingTasks, ...openFollowups].slice(0, 5).map(t => (
+            <DashItem key={`${t.title}-${t.id}`} org={t.org} title={t.title} meta={t.waiting_on || t.status} />
+          ))}
+        </DashBox>
+
+        <DashBox title="Active Initiatives" count={activeInitiatives.length} onClick={() => setTab('initiatives')}>
+          {activeInitiatives.slice(0, 5).map(i => (
+            <DashItem key={i.id} org={i.org} title={i.title} meta={i.next_action || i.status} />
+          ))}
+        </DashBox>
+
+        <DashBox title="Workfront Needed" count={workfrontNeeded.length} onClick={() => setTab('tasks')}>
+          {workfrontNeeded.slice(0, 5).map(t => (
+            <DashItem key={t.id} org={t.org} title={t.title} meta={t.next_action || 'Needs request/update'} />
+          ))}
+        </DashBox>
+
+        <DashBox title="Recent Work Log" count={recentLogs.length} onClick={() => setTab('log')}>
+          {recentLogs.map(l => (
+            <DashItem
+              key={l.id}
+              org={l.org}
+              title={l.text}
+              meta={new Date(l.created_at).toLocaleString()}
+            />
+          ))}
+        </DashBox>
+
+        <DashBox title="Open Tasks" count={openTasks.length} onClick={() => setTab('tasks')}>
+          {openTasks.slice(0, 5).map(t => (
+            <DashItem key={t.id} org={t.org} title={t.title} meta={t.status} />
+          ))}
+        </DashBox>
+      </div>
+    </section>
+  );
+}
+
+function DashBox({ title, count, children, onClick }) {
+  return (
+    <div className="dashBox">
+      <div className="dashHead">
+        <h3>{title}</h3>
+        <button className="ghost" onClick={onClick}>View</button>
+      </div>
+      <div className="dashCount">{count}</div>
+      <div>{children || <p className="empty">Nothing here.</p>}</div>
+    </div>
+  );
+}
+
+function DashItem({ org, title, meta }) {
+  return (
+    <div className="dashItem">
+      <div className="meta">{org} {meta ? `· ${meta}` : ''}</div>
+      <strong>{title}</strong>
+    </div>
+  );
 }
 
 createRoot(document.getElementById('root')).render(<App />)

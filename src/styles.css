@@ -184,3 +184,48 @@ article h3 {
 .kanbanCard:active {
   cursor: grabbing;
 }
+
+.dashGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.dashBox {
+  background: #14141e;
+  border: 1px solid #2a2a38;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.dashHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dashHead h3 {
+  margin: 0;
+}
+
+.dashCount {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 8px 0 12px;
+}
+
+.dashItem {
+  border-top: 1px solid #252538;
+  padding: 9px 0;
+}
+
+.dashItem strong {
+  display: block;
+  font-size: 13px;
+}
+
+.empty {
+  color: #777;
+  font-size: 13px;
+}
