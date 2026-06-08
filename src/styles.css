@@ -229,3 +229,12 @@ article h3 {
   color: #777;
   font-size: 13px;
 }
+.good {
+  color: #6fcf97;
+  font-weight: 700
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed
+}
